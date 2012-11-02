@@ -1,14 +1,17 @@
 package com.MemAlloc;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 public class MemAllocActivity extends Activity implements OnClickListener {
 	
@@ -16,8 +19,7 @@ public class MemAllocActivity extends Activity implements OnClickListener {
 	private Button btnRun;
 	private EditText etarrSize;
 	private EditText etarrCount;
-	private boolean isRunning;
-	private Thread thread; 
+	private boolean isServiceRunning;
 	
 	/** Called when the activity is first created. */
 	@Override
@@ -27,54 +29,98 @@ public class MemAllocActivity extends Activity implements OnClickListener {
 		
 		btnRun = (Button) findViewById(R.id.btnrun);
 		etarrSize = (EditText)findViewById(R.id.etarrSize);
-		etarrCount= (EditText)findViewById(R.id.etarrCount);	
+		etarrCount= (EditText)findViewById(R.id.etarrCount);
 		
 		btnRun.setOnClickListener(this);
+		
+		isServiceRunning = false;
+		Intent intent = new Intent(this, MemAllocService.class);
+		startService(intent);
 	}
 	
-    public boolean dispatchKeyEvent(KeyEvent event) {
-        
-    	switch (event.getKeyCode()) {
-    	case KeyEvent.KEYCODE_VOLUME_UP:
-            Log.e(LOG_TAG, "[dispatchKeyEvent] KEYCODE_VOLUME_UP : ");
-        	if(isRunning == false)
-        	{
-        		createThread();
-        	}
-    		break;
-    	case KeyEvent.KEYCODE_VOLUME_DOWN:
-            Log.e(LOG_TAG, "[dispatchKeyEvent] KEYCODE_VOLUME_DOWN : ");
-            stopThread();
-    		break;
-    	}
-    	return super.dispatchKeyEvent(event);
-    }
-	
+
+	@Override
+	protected void onResume() {
+		// TODO Auto-generated method stub
+		super.onResume();
+		
+		Toast.makeText(this, "onResume", Toast.LENGTH_LONG).show();
+		
+        Log.e(LOG_TAG, "[onResume] ");		
+		
+		IntentFilter filter = new IntentFilter();
+		filter.addAction("com.MemAlloc.ThreadStarted");
+		filter.addAction("com.MemAlloc.ThreadStopped");
+		filter.addAction(Intent.ACTION_HEADSET_PLUG);		
+		registerReceiver(mMemAllocListener, filter);
+	}
 	
 	@Override
 	public void onClick(View v) {
 		// TODO Auto-generated method stub
-        Log.e(LOG_TAG, "Clicked button isRunning : " + isRunning);		
+        Log.e(LOG_TAG, "Clicked button isRunning : " + isServiceRunning);		
 		
         if(v == btnRun) {
-        	if(isRunning == false)
+        	if(isServiceRunning == false)
         	{
-        		createThread();
+            	Intent intent = new Intent();
+            	intent.setAction("com.MemAlloc.StartThread");
+            	intent.putExtra("arrSize", Integer.parseInt(etarrSize.getText().toString()));
+            	intent.putExtra("arrCount", Integer.parseInt(etarrCount.getText().toString()));
+            	sendBroadcast(intent);
         	}
         	else
         	{
-        		stopThread();
+            	Intent intent = new Intent();
+            	intent.setAction("com.MemAlloc.StopThread");
+            	sendBroadcast(intent);        		
         	}
+        	
+        	btnRun.setClickable(false);
         }
 	}
+	
+    private BroadcastReceiver mMemAllocListener = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent)
+        {
+            String action = intent.getAction();
 
-
+            Log.e(LOG_TAG, "[onReceive] " + action);            
+            
+            if (action.equals("com.MemAlloc.ThreadStarted"))
+            {
+            	btnRun.setText("Stop");
+            	btnRun.setClickable(true);
+        		etarrSize.setEnabled(false);
+        		etarrCount.setEnabled(false);
+        		isServiceRunning = true;
+            }
+            else if (action.equals("com.MemAlloc.ThreadStopped"))
+            {
+            	btnRun.setText("Start");
+            	btnRun.setClickable(true);
+        		etarrSize.setEnabled(true);
+        		etarrCount.setEnabled(true);       
+        		isServiceRunning = false;
+            }
+        }
+    };
 	
 	protected void onStop()
 	{
 		super.onStop();
-		isRunning = false;
-		btnRun.setText("run");
+        Log.e(LOG_TAG, "[onStop] ");
+        unregisterReceiver(mMemAllocListener);
 	}
 
+	@Override
+	protected void onDestroy() {
+		// TODO Auto-generated method stub
+		super.onDestroy();
+		
+		isServiceRunning = false;
+		Intent intent = new Intent(this, MemAllocService.class);        		
+	 	stopService(intent);
+	}
 }

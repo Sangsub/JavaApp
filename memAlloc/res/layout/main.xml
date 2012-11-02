@@ -31,5 +31,4 @@
     
     <Button android:id="@+id/btnrun" android:layout_width="70dip" 
         android:layout_height="wrap_content" android:text="run" />
-
 </LinearLayout>

@@ -11,33 +11,89 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class MemAllocActivity extends Activity implements OnClickListener {
 	
 	private String LOG_TAG = "MemAlloc_Activity";
-	private Button btnRun;
-	private EditText etarrSize;
-	private EditText etarrCount;
-	private boolean isServiceRunning;
+	private Button mbtnVMHeaprun;
+	private Button mbtnNativeHeaprun;
+	private EditText meditArrSize;
+	private EditText meditArrCount;
+	private TextView mtvVMAllocStatus;
+	private TextView mtvNativeAllocStatus;
+	
+	private boolean isVMAllocThreadRunning;
+	private boolean isNativeAllocThreadRunning;
+	
+	private int mVMAllocArrcount;
+	private int mVMAllocArrsize;
+	private int mNativeAllocArrcount;
+	private int mNativeAllocArrsize;
+	
+	private void updateStatus()
+	{
+		String printBuffer;
+		
+		Log.e(LOG_TAG, "[updateStatus] isVMAllocThreadRunning : " + isVMAllocThreadRunning);
+		Log.e(LOG_TAG, "[updateStatus] isNativeAllocThreadRunning : " + isNativeAllocThreadRunning);
+		
+		if(isVMAllocThreadRunning)
+		{
+			printBuffer = "Be allocated in VM \n"
+						+ "arrCount : " + mVMAllocArrcount + "\n"
+						+ "arrSize : " + mVMAllocArrsize;
+			
+			mtvVMAllocStatus.setText(printBuffer);
+		}
+		else
+		{
+			mtvVMAllocStatus.setText(R.string.vmheap_allocthread_not_working);
+		}
+		
+		if(isNativeAllocThreadRunning)
+		{
+			printBuffer = "Be allocated in Native \n"
+					+ "arrCount : " + mNativeAllocArrcount + "\n"
+					+ "arrSize : " + mNativeAllocArrsize;			
+		
+			mtvNativeAllocStatus.setText(printBuffer);
+		}
+		else
+		{
+			mtvNativeAllocStatus.setText(R.string.nativeheap_allocthread_not_working);
+		}
+	}
+	
 	
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		Log.e(LOG_TAG, "[onCreate] ");		
 		setContentView(R.layout.main);
 		
-		btnRun = (Button) findViewById(R.id.btnrun);
-		etarrSize = (EditText)findViewById(R.id.etarrSize);
-		etarrCount= (EditText)findViewById(R.id.etarrCount);
+		mbtnVMHeaprun = (Button) findViewById(R.id.btnVMHeaprun);
+		mbtnNativeHeaprun = (Button) findViewById(R.id.btnNativeHeaprun);
+		meditArrSize = (EditText)findViewById(R.id.etarrSize);
+		meditArrCount= (EditText)findViewById(R.id.etarrCount);
+		mtvVMAllocStatus = (TextView)findViewById(R.id.vmAllocStatus);
+		mtvNativeAllocStatus = (TextView)findViewById(R.id.NativeAllocStatus);
 		
-		btnRun.setOnClickListener(this);
+		mbtnVMHeaprun.setOnClickListener(this);
+		mbtnNativeHeaprun.setOnClickListener(this);
 		
-		isServiceRunning = false;
+		isVMAllocThreadRunning = false;
+		isNativeAllocThreadRunning = false;
 		Intent intent = new Intent(this, MemAllocService.class);
 		startService(intent);
+		
+		mVMAllocArrcount = mVMAllocArrsize = mNativeAllocArrcount = mNativeAllocArrsize = 0;
+		
+		updateStatus();
 	}
-	
 
 	@Override
 	protected void onResume() {
@@ -49,34 +105,62 @@ public class MemAllocActivity extends Activity implements OnClickListener {
         Log.e(LOG_TAG, "[onResume] ");		
 		
 		IntentFilter filter = new IntentFilter();
-		filter.addAction("com.MemAlloc.ThreadStarted");
-		filter.addAction("com.MemAlloc.ThreadStopped");
+		filter.addAction(MemAllocService.ACTION_VMALLOC_STARTED);
+		filter.addAction(MemAllocService.ACTION_VMALLOC_STOPPED);
+		filter.addAction(MemAllocService.ACTION_NATIVEALLOC_STARTED);
+		filter.addAction(MemAllocService.ACTION_NATIVEALLOC_STOPPED);
 		filter.addAction(Intent.ACTION_HEADSET_PLUG);		
 		registerReceiver(mMemAllocListener, filter);
+		
+		mtvVMAllocStatus.setText(R.string.vmheap_allocthread_not_working);
+		mtvNativeAllocStatus.setText(R.string.nativeheap_allocthread_not_working);
+		
+		updateStatus();
+		
 	}
 	
 	@Override
 	public void onClick(View v) {
 		// TODO Auto-generated method stub
-        Log.e(LOG_TAG, "Clicked button isRunning : " + isServiceRunning);		
-		
-        if(v == btnRun) {
-        	if(isServiceRunning == false)
+        if(v == mbtnVMHeaprun)
+        {
+        	if(isVMAllocThreadRunning == false)
         	{
-            	Intent intent = new Intent();
-            	intent.setAction("com.MemAlloc.StartThread");
-            	intent.putExtra("arrSize", Integer.parseInt(etarrSize.getText().toString()));
-            	intent.putExtra("arrCount", Integer.parseInt(etarrCount.getText().toString()));
+        		mVMAllocArrcount = Integer.parseInt(meditArrCount.getText().toString());
+        		mVMAllocArrsize = Integer.parseInt(meditArrSize.getText().toString());
+        		
+        		Intent intent = new Intent(MemAllocService.ACTION_VMALLOC_START);
+            	intent.putExtra("arrSize", mVMAllocArrsize);
+            	intent.putExtra("arrCount", mVMAllocArrcount);
             	sendBroadcast(intent);
         	}
         	else
         	{
-            	Intent intent = new Intent();
-            	intent.setAction("com.MemAlloc.StopThread");
-            	sendBroadcast(intent);        		
+        		mVMAllocArrcount = mVMAllocArrsize = 0;        		
+        		sendBroadcast(new Intent(MemAllocService.ACTION_VMALLOC_STOP));
         	}
         	
-        	btnRun.setClickable(false);
+        	mbtnVMHeaprun.setClickable(false);
+        }
+        else if(v == mbtnNativeHeaprun)
+        {
+        	if(isNativeAllocThreadRunning == false)
+        	{
+        		mNativeAllocArrcount = Integer.parseInt(meditArrCount.getText().toString());
+        		mNativeAllocArrsize = Integer.parseInt(meditArrSize.getText().toString());        		
+        		
+        		Intent intent = new Intent(MemAllocService.ACTION_NATIVEALLOC_START);
+            	intent.putExtra("arrSize", mNativeAllocArrsize);
+            	intent.putExtra("arrCount", mNativeAllocArrcount);
+            	sendBroadcast(intent);        		
+        	}
+        	else
+        	{
+        		mNativeAllocArrsize = mNativeAllocArrcount = 0;
+            	sendBroadcast(new Intent(MemAllocService.ACTION_NATIVEALLOC_STOP));
+        	}
+        	
+        	mbtnNativeHeaprun.setClickable(false);
         }
 	}
 	
@@ -88,22 +172,44 @@ public class MemAllocActivity extends Activity implements OnClickListener {
 
             Log.e(LOG_TAG, "[onReceive] " + action);            
             
-            if (action.equals("com.MemAlloc.ThreadStarted"))
+            if (action.equals(MemAllocService.ACTION_VMALLOC_STARTED))
             {
-            	btnRun.setText("Stop");
-            	btnRun.setClickable(true);
-        		etarrSize.setEnabled(false);
-        		etarrCount.setEnabled(false);
-        		isServiceRunning = true;
+            	mbtnVMHeaprun.setText(R.string.vmheap_alloc_stop);
+            	mbtnVMHeaprun.setClickable(true);
+        		isVMAllocThreadRunning = true;
             }
-            else if (action.equals("com.MemAlloc.ThreadStopped"))
+            else if (action.equals(MemAllocService.ACTION_VMALLOC_STOPPED))
             {
-            	btnRun.setText("Start");
-            	btnRun.setClickable(true);
-        		etarrSize.setEnabled(true);
-        		etarrCount.setEnabled(true);       
-        		isServiceRunning = false;
+            	mbtnVMHeaprun.setText(R.string.vmheap_alloc_start);            	
+            	mbtnVMHeaprun.setClickable(true);
+        		isVMAllocThreadRunning = false;
             }
+            else if(action.equals(MemAllocService.ACTION_NATIVEALLOC_STARTED))
+            {
+            	mbtnNativeHeaprun.setText(R.string.nativeheap_alloc_stop);
+            	mbtnNativeHeaprun.setClickable(true);
+        		isNativeAllocThreadRunning = true;            	
+            }
+            else if(action.equals(MemAllocService.ACTION_NATIVEALLOC_STOPPED))
+            {
+            	mbtnNativeHeaprun.setText(R.string.nativeheap_alloc_start);            	
+            	mbtnNativeHeaprun.setClickable(true);
+        		isNativeAllocThreadRunning = false;
+            }
+            
+            
+            if(isVMAllocThreadRunning == true && isNativeAllocThreadRunning == true)
+            {
+        		meditArrSize.setEnabled(false);
+        		meditArrCount.setEnabled(false);            	
+            }
+            else
+            {
+            	meditArrSize.setEnabled(true);
+        		meditArrCount.setEnabled(true);
+            }
+
+            updateStatus();
         }
     };
 	
@@ -119,7 +225,8 @@ public class MemAllocActivity extends Activity implements OnClickListener {
 		// TODO Auto-generated method stub
 		super.onDestroy();
 		
-		isServiceRunning = false;
+		isVMAllocThreadRunning = false;
+		isNativeAllocThreadRunning = false;
 		Intent intent = new Intent(this, MemAllocService.class);        		
 	 	stopService(intent);
 	}

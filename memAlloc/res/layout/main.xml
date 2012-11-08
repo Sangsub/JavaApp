@@ -3,7 +3,7 @@
     android:layout_width="fill_parent" android:layout_height="fill_parent"
     android:orientation="vertical" >
 
-    <LinearLayout android:id="@+id/linearLayout2" android:layout_width="match_parent"
+    <LinearLayout android:id="@+id/linearLayout1" android:layout_width="match_parent"
         android:layout_height="wrap_content" >
 
     	<TextView android:id="@+id/textView1" android:layout_width="70dip"
@@ -17,7 +17,7 @@
     	</EditText>
     </LinearLayout>
     
-    <LinearLayout android:id="@+id/linearLayout1" android:layout_width="match_parent"
+    <LinearLayout android:id="@+id/linearLayout2" android:layout_width="match_parent"
         android:layout_height="wrap_content" >
     	
     	<TextView android:id="@+id/textView2" android:layout_width="70dip"
@@ -28,7 +28,29 @@
         	android:inputType="numberSigned"/>
 
      </LinearLayout>
+
+     <LinearLayout android:id="@+id/linearLayout3" android:layout_width="match_parent"
+ 	       android:layout_height="wrap_content" android:orientation="horizontal">
     
-    <Button android:id="@+id/btnrun" android:layout_width="70dip" 
-        android:layout_height="wrap_content" android:text="run" />
+    	<Button android:id="@+id/btnVMHeaprun" android:layout_width="100dip" 
+        	android:layout_height="wrap_content" android:text="@string/vmheap_alloc_start"/>
+    
+    	<Button android:id="@+id/btnNativeHeaprun" android:layout_width="100dip" 
+        	android:layout_height="wrap_content" android:text='@string/nativeheap_alloc_start'/>
+     </LinearLayout>
+
+     <LinearLayout android:id="@+id/linearLayout4" android:layout_width="match_parent"
+ 	       android:layout_height="90dip" android:orientation="horizontal" android:padding="5dip">
+     
+     	<TextView android:id="@+id/vmAllocStatus" android:layout_width="match_parent"
+     	     android:layout_height="match_parent" android:background="#A0213456" android:textSize="13sp"
+        	 android:layout_weight="1" android:layout_marginRight="5dip" 
+        	 android:text="@string/vmheap_allocthread_not_working" />
+     
+		<TextView android:id="@+id/NativeAllocStatus" android:layout_width="match_parent"
+		     android:layout_height="match_parent" android:background="#A0213456" android:textSize="13sp"
+        	 android:layout_weight="1" android:layout_marginLeft="5dip" 
+        	 android:text="@string/nativeheap_allocthread_not_working" />
+	</LinearLayout>
+	
 </LinearLayout>

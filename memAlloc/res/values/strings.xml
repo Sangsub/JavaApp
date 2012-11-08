@@ -3,5 +3,11 @@
 
     <string name="hello">Hello World, MemAllocActivity!</string>
     <string name="app_name">MemAlloc</string>
+    <string name="vmheap_alloc_start">VMHeap Alloc Start</string>
+    <string name="vmheap_alloc_stop">VMHeap Alloc Stop</string>
+    <string name="nativeheap_alloc_start">NativeHeap Alloc Start</string>
+    <string name="nativeheap_alloc_stop">NativeHeap Alloc Stop</string>
+    <string name="vmheap_allocthread_not_working">VmHeap Alloc Thread not working</string>
+    <string name="nativeheap_allocthread_not_working">NativeHeap Alloc Thread not working</string>
 
 </resources>

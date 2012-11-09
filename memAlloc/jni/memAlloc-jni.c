@@ -64,30 +64,3 @@ Java_com_MemAlloc_MemAllocService_NativeMemAllocStartFromJNI(JNIEnv * env, jobje
 	running_memalloc = MEMALLOC_FALSE;
 	return MEMALLOC_TRUE;
 }
-
-jstring
-Java_com_MemAlloc_MemAllocService_stringFromJNI(JNIEnv * env, jobject thiz)
-{
-	char buf[256];
-	char * temp;
-	int i = 1;
-
-	sprintf(buf, "Hello from 45JNI");
-	LOGE("[Native] stringFromJNI");
-
-/*
-	while(i>0)
-	{
-		LOGE("[native] memAlloc %d", i);
-		temp = (char *) malloc(1024);
-
-		if(temp == NULL)
-		{
-			LOGE("out of memory");
-		}
-
-		sleep(1);
-	}
-*/
-	return (*env)->NewStringUTF(env, buf);
-}

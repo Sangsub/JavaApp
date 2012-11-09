@@ -30,7 +30,6 @@ public class MemAllocService extends Service
     public static final String ACTION_NATIVEALLOC_STARTED = "com.MemAlloc.NativeAllocStartedThread";
     public static final String ACTION_NATIVEALLOC_STOPPED = "com.MemAlloc.NativeAllocStoppedThread";
     
-    public native String stringFromJNI();
     public native void NativeMemAllocStopFromJNI();
     public native boolean NativeMemAllocStartFromJNI(int arrCount, int arrSize);
     
@@ -130,7 +129,7 @@ public class MemAllocService extends Service
 		}
 
 		isVMAllocThreadRunning = false;
-
+		mVMAllocThread = null;
 		Intent intent = new Intent();
 		intent.setAction(ACTION_VMALLOC_STOPPED);
 		sendBroadcast(intent);
@@ -155,11 +154,7 @@ public class MemAllocService extends Service
             Toast.makeText(context, action, Toast.LENGTH_LONG).show();
             Log.e(LOG_TAG, "[onReceive] " + action);            
             
-            if(action.equals(Intent.ACTION_HEADSET_PLUG))
-            {
-            	
-            }
-            else if(action.equals(ACTION_VMALLOC_START))
+            if(action.equals(ACTION_VMALLOC_START))
             {
             	mVMarrCount = intent.getIntExtra("arrCount", 1);
             	mVMarrSize = intent.getIntExtra("arrSize", 1);
@@ -185,7 +180,9 @@ public class MemAllocService extends Service
             }
             else if(action.equals(ACTION_NATIVEALLOC_STOP))
             {
-            	mNativearrCount = mNativearrSize = 0;            	
+            	mNativearrCount = mNativearrSize = 0;
+            	NativeMemAllocStopFromJNI();
+            	mNativeAllocThread = null;
             }
         }
     };

@@ -10,4 +10,6 @@
     <string name="vmheap_allocthread_not_working">VmHeap Alloc Thread not working</string>
     <string name="nativeheap_allocthread_not_working">NativeHeap Alloc Thread not working</string>
 
+    <string name="app_size">AppSize : </string>
+    <string name="pss_size">pssSize : </string>
 </resources>

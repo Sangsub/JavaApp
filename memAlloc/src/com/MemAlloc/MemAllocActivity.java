@@ -1,11 +1,18 @@
 package com.MemAlloc;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -14,8 +21,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MemAllocActivity extends Activity implements OnClickListener {
-	
+public class MemAllocActivity extends Activity implements OnClickListener
+{
 	private String LOG_TAG = "MemAlloc_Activity";
 	private Button mbtnVMHeaprun;
 	private Button mbtnNativeHeaprun;
@@ -23,6 +30,10 @@ public class MemAllocActivity extends Activity implements OnClickListener {
 	private EditText meditArrCount;
 	private TextView mtvVMAllocStatus;
 	private TextView mtvNativeAllocStatus;
+	private TextView mtvPSSInfo;
+	private TextView mtvAppSize;
+	
+	private memInfoThread m_memInfoThread;
 	
 	private boolean isVMAllocThreadRunning;
 	private boolean isNativeAllocThreadRunning;
@@ -31,6 +42,31 @@ public class MemAllocActivity extends Activity implements OnClickListener {
 	private int mVMAllocArrsize;
 	private int mNativeAllocArrcount;
 	private int mNativeAllocArrsize;
+	
+	@Override
+	protected void onPause() {
+		// TODO Auto-generated method stub
+		super.onPause();
+		Log.e(LOG_TAG, "[onPause] ");
+		
+		do
+		{
+			Log.e(LOG_TAG, "[onPause] m_memInfoThread.isAlive");
+			m_memInfoThread.onStop();
+			SystemClock.sleep(100);
+		}while(m_memInfoThread.isAlive());
+		
+		m_memInfoThread = null;
+		Log.e(LOG_TAG, "[onPause] m_memInfoThread.Die");
+	}
+
+	@Override
+	protected void onStart() {
+		// TODO Auto-generated method stub
+		super.onStart();
+		
+        Log.e(LOG_TAG, "[onStart] ");
+	}
 	
 	private void updateStatus()
 	{
@@ -66,14 +102,13 @@ public class MemAllocActivity extends Activity implements OnClickListener {
 		}
 	}
 	
-	
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
 		Log.e(LOG_TAG, "[onCreate] ");		
-		setContentView(R.layout.main);
+		setContentView(R.layout.mem_alloc_view);
 		
 		mbtnVMHeaprun = (Button) findViewById(R.id.btnVMHeaprun);
 		mbtnNativeHeaprun = (Button) findViewById(R.id.btnNativeHeaprun);
@@ -81,6 +116,10 @@ public class MemAllocActivity extends Activity implements OnClickListener {
 		meditArrCount= (EditText)findViewById(R.id.etarrCount);
 		mtvVMAllocStatus = (TextView)findViewById(R.id.vmAllocStatus);
 		mtvNativeAllocStatus = (TextView)findViewById(R.id.NativeAllocStatus);
+		
+		mtvPSSInfo =(TextView) findViewById(R.id.pssinfo);
+		mtvAppSize = (TextView) findViewById(R.id.appsize);
+		
 		
 		mbtnVMHeaprun.setOnClickListener(this);
 		mbtnNativeHeaprun.setOnClickListener(this);
@@ -93,8 +132,28 @@ public class MemAllocActivity extends Activity implements OnClickListener {
 		mVMAllocArrcount = mVMAllocArrsize = mNativeAllocArrcount = mNativeAllocArrsize = 0;
 		
 		updateStatus();
+
 	}
 
+	Handler mHandler = new Handler()
+	{
+		String str;
+		public void handleMessage(Message msg)
+		{
+			Log.e(LOG_TAG, "[handleMessage] msg : " + msg.what + ", msg.arg1" + msg.arg1);			
+			if(msg.what == 0)
+			{
+				int pssSize = msg.arg1;
+				Log.e(LOG_TAG, "[handleMessage] pssSize : " + pssSize + ", appSize" + pssSize/1024);
+				
+				str = getString(R.string.pss_size) + msg.arg1;
+				mtvPSSInfo.setText(str);
+				str = getString(R.string.pss_size) + msg.arg1/1024 + " MB";
+				mtvAppSize.setText(str);
+			}
+		}
+	};
+	
 	@Override
 	protected void onResume() {
 		// TODO Auto-generated method stub
@@ -117,6 +176,9 @@ public class MemAllocActivity extends Activity implements OnClickListener {
 		
 		updateStatus();
 		
+		updateMemInfo();
+		m_memInfoThread = new memInfoThread(mHandler, this);
+		m_memInfoThread.start();
 	}
 	
 	@Override
@@ -218,6 +280,8 @@ public class MemAllocActivity extends Activity implements OnClickListener {
 		super.onStop();
         Log.e(LOG_TAG, "[onStop] ");
         unregisterReceiver(mMemAllocListener);
+        
+        //m_memInfoThread.stop();
 	}
 
 	@Override
@@ -230,4 +294,30 @@ public class MemAllocActivity extends Activity implements OnClickListener {
 		Intent intent = new Intent(this, MemAllocService.class);        		
 	 	stopService(intent);
 	}
+
+
+	private void updateMemInfo()
+	{
+		TextView mtvMeminfo = (TextView) findViewById(R.id.meminfo);
+		
+		try
+		{
+			BufferedReader in = new BufferedReader(new FileReader("/proc/meminfo"), 8192);
+			String s;
+			
+			Log.e(LOG_TAG, "[updateMemInfo] ");			
+			
+			while((s=in.readLine())!=null)
+			{
+		        Log.e(LOG_TAG, "[updateMemInfo 2] " + s);				
+				//String segs[] = s.trim().split("[ ]+");
+		        mtvMeminfo.append(s+"\n");
+			}
+		}
+		catch(IOException e)
+		{}
+		catch(NumberFormatException e)
+		{}
+	}
+
 }

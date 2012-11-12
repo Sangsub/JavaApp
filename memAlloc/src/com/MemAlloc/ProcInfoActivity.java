@@ -1,8 +1,8 @@
 package com.MemAlloc;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -16,6 +16,7 @@ public class ProcInfoActivity extends Activity
 	private TextView mtvProcInfo;
 	private String LOG_TAG = "ProcInfoActivity";
 	private boolean isActivityRunning;
+    private Runtime runtime; 
 	
 	
 	@Override
@@ -28,6 +29,8 @@ public class ProcInfoActivity extends Activity
 	
 		isActivityRunning = false;
 		mtvProcInfo = (TextView) findViewById(R.id.procResult);
+		
+		runtime = Runtime.getRuntime();
 	}
 
 	@Override
@@ -71,6 +74,29 @@ public class ProcInfoActivity extends Activity
 		Log.e(LOG_TAG, "[onDestroy]");
 	}
 	
+	private void updateMeminfo()
+	{
+		try
+		{
+			String s;
+			BufferedReader in = memAllocUtil.getDumpsysMeminfo(memAllocUtil.findPIDByString(this, "com.MemAlloc"));
+			
+			mtvProcInfo.setText("");
+			
+			while((s=in.readLine())!=null)
+			{
+		        Log.e(LOG_TAG, "[handleMessage] readLine : " + s);				
+				//String segs[] = s.trim().split("[ ]+");
+		        mtvProcInfo.append(s+"\n");
+			}
+		}
+		catch(IOException e)
+		{}
+		catch(NumberFormatException e)
+		{}		
+	}
+	
+	
 	Handler mHandler = new Handler()
 	{
 		public void handleMessage(Message msg)
@@ -79,22 +105,7 @@ public class ProcInfoActivity extends Activity
 			
 			if(msg.what == 0)
 			{
-				try
-				{
-					BufferedReader in = new BufferedReader(new FileReader("/proc/meminfo"), 8192);
-					String s;
-					
-					while((s=in.readLine())!=null)
-					{
-				        Log.e(LOG_TAG, "[handleMessage] readLine : " + s);				
-						//String segs[] = s.trim().split("[ ]+");
-				        mtvProcInfo.append(s+"\n");
-					}
-				}
-				catch(IOException e)
-				{}
-				catch(NumberFormatException e)
-				{}		
+				updateMeminfo();
 				
 				if(isActivityRunning)
 					mHandler.sendEmptyMessageDelayed(0, 1000);

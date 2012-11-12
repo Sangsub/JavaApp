@@ -1,5 +1,11 @@
 package com.MemAlloc;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.StringTokenizer;
+
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -27,6 +33,8 @@ public class MemAllocActivity extends Activity implements OnClickListener
 	private TextView mtvNativeAllocStatus;
 	private TextView mtvPSSInfo;
 	private TextView mtvAppSize;
+	private TextView mMeminfo;
+	
 	private boolean isVMAllocThreadRunning;
 	private boolean isNativeAllocThreadRunning;
 	private int mVMAllocArrcount;
@@ -35,20 +43,61 @@ public class MemAllocActivity extends Activity implements OnClickListener
 	private int mNativeAllocArrsize;
 	private boolean isActivityRunning;
 	
+	
+	/** Called when the activity is first created. */
 	@Override
-	protected void onPause() {
-		// TODO Auto-generated method stub
-		super.onPause();
-		Log.e(LOG_TAG, "[onPause] ");
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
 		
-		isActivityRunning = false;
+		Log.e(LOG_TAG, "[onCreate] ");		
+		setContentView(R.layout.mem_alloc_view);
+		
+		mbtnVMHeaprun = (Button) findViewById(R.id.btnVMHeaprun);
+		mbtnNativeHeaprun = (Button) findViewById(R.id.btnNativeHeaprun);
+		meditArrSize = (EditText)findViewById(R.id.etarrSize);
+		meditArrCount= (EditText)findViewById(R.id.etarrCount);
+		mtvVMAllocStatus = (TextView)findViewById(R.id.vmAllocStatus);
+		mtvNativeAllocStatus = (TextView)findViewById(R.id.NativeAllocStatus);
+		mtvPSSInfo =(TextView) findViewById(R.id.pssinfo);
+		mtvAppSize = (TextView) findViewById(R.id.appsize);
+		mMeminfo = (TextView)findViewById(R.id.meminfo);
+		
+		mbtnVMHeaprun.setOnClickListener(this);
+		mbtnNativeHeaprun.setOnClickListener(this);
+		
+		isVMAllocThreadRunning = false;
+		isNativeAllocThreadRunning = false;
+		Intent intent = new Intent(this, MemAllocService.class);
+		startService(intent);
+		
+		mVMAllocArrcount = mVMAllocArrsize = mNativeAllocArrcount = mNativeAllocArrsize = 0;
+		
+		updateStatus();
 	}
 
+	
 	@Override
-	protected void onStart() {
+	protected void onResume() {
 		// TODO Auto-generated method stub
-		super.onStart();
-        Log.e(LOG_TAG, "[onStart] ");
+		super.onResume();
+        Log.e(LOG_TAG, "[onResume] ");		
+		
+		IntentFilter filter = new IntentFilter();
+		filter.addAction(MemAllocService.ACTION_VMALLOC_STARTED);
+		filter.addAction(MemAllocService.ACTION_VMALLOC_STOPPED);
+		filter.addAction(MemAllocService.ACTION_NATIVEALLOC_STARTED);
+		filter.addAction(MemAllocService.ACTION_NATIVEALLOC_STOPPED);
+		filter.addAction(Intent.ACTION_HEADSET_PLUG);		
+		registerReceiver(mMemAllocListener, filter);
+		
+		mtvVMAllocStatus.setText(R.string.vmheap_allocthread_not_working);
+		mtvNativeAllocStatus.setText(R.string.nativeheap_allocthread_not_working);
+		
+		updateStatus();
+		
+		isActivityRunning = true;
+		Message msg = Message.obtain(mHandler, 0, updateAppSize(), 0);
+		mHandler.sendMessage(msg);	
 	}
 	
 	private void updateStatus()
@@ -85,37 +134,78 @@ public class MemAllocActivity extends Activity implements OnClickListener
 		}
 	}
 	
-	/** Called when the activity is first created. */
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
+	void updateDetailInfo()
+	{
+		int pid;
+		BufferedReader in = null;
+		long maxHeapSize = Runtime.getRuntime().maxMemory()/1024;
+		StringBuilder infoBuilder = new StringBuilder();
 		
-		Log.e(LOG_TAG, "[onCreate] ");		
-		setContentView(R.layout.mem_alloc_view);
 		
-		mbtnVMHeaprun = (Button) findViewById(R.id.btnVMHeaprun);
-		mbtnNativeHeaprun = (Button) findViewById(R.id.btnNativeHeaprun);
-		meditArrSize = (EditText)findViewById(R.id.etarrSize);
-		meditArrCount= (EditText)findViewById(R.id.etarrCount);
-		mtvVMAllocStatus = (TextView)findViewById(R.id.vmAllocStatus);
-		mtvNativeAllocStatus = (TextView)findViewById(R.id.NativeAllocStatus);
-		mtvPSSInfo =(TextView) findViewById(R.id.pssinfo);
-		mtvAppSize = (TextView) findViewById(R.id.appsize);
+		infoBuilder.append("Max Heap : ");
+		infoBuilder.append(String.format("%s KB\n", new DecimalFormat("###,###").format(maxHeapSize)));
+
+		pid = memAllocUtil.findPIDByString(this, "com.MemAlloc");
 		
-		mbtnVMHeaprun.setOnClickListener(this);
-		mbtnNativeHeaprun.setOnClickListener(this);
-		
-		isVMAllocThreadRunning = false;
-		isNativeAllocThreadRunning = false;
-		Intent intent = new Intent(this, MemAllocService.class);
-		startService(intent);
-		
-		mVMAllocArrcount = mVMAllocArrsize = mNativeAllocArrcount = mNativeAllocArrsize = 0;
-		
-		updateStatus();
+		try
+		{
+			String line = "";
+			String content = "";
+			  
+			in = memAllocUtil.getDumpsysMeminfo(pid);
+			
+			final String MATCH_STRING = "allocated:";
+			  
+			while ((line = in.readLine()) != null)
+			{
+				if (line.contains("allocated:"))
+				{
+					line = line.trim();
+					int start = line.indexOf(MATCH_STRING) + MATCH_STRING.length();
+					content = line.substring(start+1, line.length()).trim();
+					break;
+				}
+			}
+
+			ArrayList<String> list = new ArrayList<String>();
+			StringTokenizer st = new StringTokenizer(content, " ");
+			
+			  while (st.hasMoreTokens())
+				   list.add(st.nextToken());
+
+			  long nativeHeapAllocSize = Long.parseLong(list.get(0)); // native
+			  long dalvikHeapAllocSize = Long.parseLong(list.get(1)); // dalvik
+			  long totalHeapAllocSize = Long.parseLong(list.get(3)); // total
+			  
+			  DecimalFormat df = new DecimalFormat("###,###");
+
+			  infoBuilder.append("native : ");
+			  infoBuilder.append(String.format("%s KB\n", df.format(nativeHeapAllocSize)));
+			  infoBuilder.append("dalvik : ");
+			  infoBuilder.append(String.format("%s KB\n", df.format(dalvikHeapAllocSize)));
+			  infoBuilder.append("total : ");
+			  infoBuilder.append(String.format("%s KB\n", df.format(totalHeapAllocSize)));
+			  infoBuilder.append("used : ");
+			  infoBuilder.append(String.format("%.2f", (100*((float)totalHeapAllocSize/(float)maxHeapSize)))+" %");
+
+			
+			  Log.e(LOG_TAG, "[handleMessage] infoBuilder : " + infoBuilder);
+			  
+			  mMeminfo.setText(infoBuilder);
+		}
+		catch (IOException e){ e.printStackTrace(); }
+		finally
+		{
+			if(in != null)
+			{
+				try { in.close(); }
+				catch (IOException e){ e.printStackTrace(); }
+			}
+		 }
+
 
 	}
-
+	
 	Handler mHandler = new Handler()
 	{
 		String str;
@@ -132,6 +222,9 @@ public class MemAllocActivity extends Activity implements OnClickListener
 				str = getString(R.string.pss_size) + " " + msg.arg1/1024 + " MB";
 				mtvAppSize.setText(str);
 				
+				mMeminfo.setText("");
+				updateDetailInfo();
+				
 				if(isActivityRunning)
 				{
 					Message tmsg = Message.obtain(mHandler, 0, updateAppSize(), 0);
@@ -140,30 +233,7 @@ public class MemAllocActivity extends Activity implements OnClickListener
 			}
 		}
 	};
-	
-	@Override
-	protected void onResume() {
-		// TODO Auto-generated method stub
-		super.onResume();
-        Log.e(LOG_TAG, "[onResume] ");		
-		
-		IntentFilter filter = new IntentFilter();
-		filter.addAction(MemAllocService.ACTION_VMALLOC_STARTED);
-		filter.addAction(MemAllocService.ACTION_VMALLOC_STOPPED);
-		filter.addAction(MemAllocService.ACTION_NATIVEALLOC_STARTED);
-		filter.addAction(MemAllocService.ACTION_NATIVEALLOC_STOPPED);
-		filter.addAction(Intent.ACTION_HEADSET_PLUG);		
-		registerReceiver(mMemAllocListener, filter);
-		
-		mtvVMAllocStatus.setText(R.string.vmheap_allocthread_not_working);
-		mtvNativeAllocStatus.setText(R.string.nativeheap_allocthread_not_working);
-		
-		updateStatus();
-		
-		isActivityRunning = true;
-		Message msg = Message.obtain(mHandler, 0, updateAppSize(), 0);
-		mHandler.sendMessage(msg);	
-	}
+
 	
 	
 	private int updateAppSize()
@@ -279,6 +349,22 @@ public class MemAllocActivity extends Activity implements OnClickListener
         }
     };
 	
+	@Override
+	protected void onStart() {
+		// TODO Auto-generated method stub
+		super.onStart();
+        Log.e(LOG_TAG, "[onStart] ");
+	}
+    
+	@Override
+	protected void onPause() {
+		// TODO Auto-generated method stub
+		super.onPause();
+		Log.e(LOG_TAG, "[onPause] ");
+		
+		isActivityRunning = false;
+	}
+    
 	protected void onStop()
 	{
 		super.onStop();

@@ -45,7 +45,7 @@
      	<TextView android:id="@+id/vmAllocStatus" android:layout_width="match_parent"
      	     android:layout_height="match_parent" android:background="#A0213456" android:textSize="13sp"
         	 android:layout_weight="1" android:layout_marginRight="5dip" 
-        	 android:text="@string/vmheap_allocthread_not_working" />
+        	 android:text="@string/vmheap_allocthread_not_working"/>
      
 		<TextView android:id="@+id/NativeAllocStatus" android:layout_width="match_parent"
 		     android:layout_height="match_parent" android:background="#A0213456" android:textSize="13sp"
@@ -54,19 +54,21 @@
 	</LinearLayout>
 
      <LinearLayout android:id="@+id/linearLayout5" android:layout_width="match_parent" 
-         	android:layout_height="wrap_content" android:padding="5dip">
+         	android:layout_height="35dip" android:padding="5dip">
 		<TextView android:id="@+id/pssinfo" android:layout_width="match_parent"
 		     android:layout_height="match_parent" android:background="#A0213456" android:textSize="13sp"
-        	 android:layout_weight="1" android:layout_marginLeft="5dip" 
-        	 android:text="@string/pss_size" />		
+        	 android:layout_weight="1" android:layout_marginLeft="5dip" android:text="@string/pss_size"
+        	 android:gravity="center_vertical"/>		
          
 		<TextView android:id="@+id/appsize" android:layout_width="match_parent"
 		     android:layout_height="match_parent" android:background="#A0213456" android:textSize="13sp"
-        	 android:layout_weight="1" android:layout_marginLeft="5dip" 
-        	 android:text="@string/app_size" />         
+        	 android:layout_weight="1" android:layout_marginLeft="5dip" android:text="@string/app_size"
+        	 android:gravity="center_vertical"/>         
      </LinearLayout>
 
-     <TextView android:id="@+id/meminfo"  android:layout_width="match_parent" android:layout_height="wrap_content"
-         	android:background="#A0213456" android:textSize="13sp" />
-     
+     <LinearLayout android:id="@+id/linearLayout6" android:layout_width="match_parent" 
+         	android:layout_height="120dip" android:padding="5dip">
+		<TextView android:id="@+id/meminfo"  android:layout_width="match_parent" android:layout_height="match_parent"
+				android:background="#A0213456" android:textSize="13sp" />
+     </LinearLayout>
 </LinearLayout>

@@ -1,5 +1,8 @@
 package com.MemAlloc;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.List;
 
 import android.app.Activity;
@@ -34,9 +37,29 @@ public class memAllocUtil
 	
 	static MemoryInfo getProcessMemoryInfo(Context context, int [] pid)
 	{
+		Log.e(LOG_TAG, "getProcessMemoryInfo : ");
 		ActivityManager am = (ActivityManager) context.getSystemService(Activity.ACTIVITY_SERVICE);
 		
 		return am.getProcessMemoryInfo(pid)[0];
 	}
 	
+	static BufferedReader getDumpsysMeminfo(int pid)
+	{
+		Process process;
+		BufferedReader in = null;
+		String command = String.format("dumpsys meminfo %s", pid);
+		
+		Log.e(LOG_TAG, "getDumpsysMeminfo : ");
+		
+		try {
+			process = Runtime.getRuntime().exec(command);
+			in = new BufferedReader(new InputStreamReader(process.getInputStream()));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return in; 
+
+	}
 }

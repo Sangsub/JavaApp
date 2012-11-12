@@ -15,6 +15,8 @@ public class ProcInfoActivity extends Activity
 {
 	private TextView mtvProcInfo;
 	private String LOG_TAG = "ProcInfoActivity";
+	private boolean isActivityRunning;
+	
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -23,7 +25,8 @@ public class ProcInfoActivity extends Activity
 		setContentView(R.layout.proc_info_view);
 		
 		Log.e(LOG_TAG, "[onCreate]");		
-		
+	
+		isActivityRunning = false;
 		mtvProcInfo = (TextView) findViewById(R.id.procResult);
 	}
 
@@ -41,13 +44,16 @@ public class ProcInfoActivity extends Activity
 		super.onResume();
 		Log.e(LOG_TAG, "[onResume]");
 		
+		isActivityRunning = true;
 		mHandler.sendEmptyMessage(0);
+		
 	}
 
 	@Override
 	protected void onPause() {
 		// TODO Auto-generated method stub
 		super.onPause();
+		isActivityRunning = false;
 		Log.e(LOG_TAG, "[onPause]");
 	}
 
@@ -90,7 +96,8 @@ public class ProcInfoActivity extends Activity
 				catch(NumberFormatException e)
 				{}		
 				
-				mHandler.sendEmptyMessageDelayed(0, 1000);
+				if(isActivityRunning)
+					mHandler.sendEmptyMessageDelayed(0, 1000);
 			}
 		}
 	};

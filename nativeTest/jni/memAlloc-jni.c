@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <jni.h>
 #include <android/log.h>
 
@@ -16,10 +18,24 @@ jstring
 Java_com_nativeTest_jni_nativeTest_stringFromJNI(JNIEnv * env, jobject thiz)
 {
 	char buf[256];
+	char * temp;
+	int i = 1;
+
 	sprintf(buf, "Hello from 45JNI");
 
-	LOGE("testaaaaaaaaaaaaaaaaaaaaaa");
+	while(i>0)
+	{
 
+		LOGE("[native] memAlloc %d", i);
+		temp = (char *) malloc(1024);
+
+		if(temp == NULL)
+		{
+			LOGE("out of memory");
+		}
+
+		sleep(1);
+	}
 	return (*env)->NewStringUTF(env, buf);
 }
 

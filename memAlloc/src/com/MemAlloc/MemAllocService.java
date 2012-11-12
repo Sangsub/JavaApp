@@ -98,8 +98,9 @@ public class MemAllocService extends Service
 					for(int i=0; i<mVMarrCount; i++)
 					{
 						arr[i] = new Double[mVMarrSize];
+//						Log.e(LOG_TAG, "[createVMAllocThread] Alloc VMHEAP");
+//						SystemClock.sleep(10);
 					}
-					SystemClock.sleep(100);
 				}
 				
 				Log.e(LOG_TAG, "[createVMAllocThread] Loop compleate");				

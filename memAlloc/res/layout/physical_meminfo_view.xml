@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:layout_width="fill_parent" android:layout_height="fill_parent"
+    android:orientation="vertical" android:paddingTop="10dip" xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <LinearLayout android:id="@+id/linearLayout1" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:orientation="vertical">
+
+    	<TextView android:id="@+id/textView1" android:layout_width="wrap_content"
+        	android:layout_height="wrap_content" android:text="@string/buddy_info" />
+
+    	<HorizontalScrollView android:id="@+id/horizontalScrollView1" android:layout_width="wrap_content"
+        	android:layout_height="wrap_content" >
+    		
+	        	<TextView android:id="@+id/tvBuddyInfo" android:layout_width="500dip"  android:textSize="10sp" 
+    	    			android:layout_height="wrap_content" android:scrollbars="horizontal" 
+        				android:scrollHorizontally="true" android:scrollbarAlwaysDrawHorizontalTrack="true" android:typeface="monospace"/>
+        
+    	</HorizontalScrollView>
+    </LinearLayout>
+    
+    <LinearLayout android:id="@+id/linearLayout2" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="10dip">
+    	
+    	<TextView android:id="@+id/textView2" android:layout_width="match_parent"
+        	android:layout_height="wrap_content" android:text="@string/mem_info" />
+        
+    	<ScrollView android:id="@+id/scrollView2"  android:layout_width="match_parent" 
+    	    		android:layout_height="wrap_content" >    	
+    		
+    		<TextView android:id="@+id/tvMemInfo" android:layout_width="match_parent"  android:textSize="10sp" 
+    	    		android:layout_height="wrap_content" android:scrollbars="vertical" android:typeface="monospace"/>
+    	
+    	</ScrollView>   
+     </LinearLayout>
+</LinearLayout>

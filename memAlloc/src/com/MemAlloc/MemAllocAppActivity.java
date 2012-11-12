@@ -33,10 +33,10 @@ public class MemAllocAppActivity extends TabActivity{
         
         tabHost.addTab(tabHost.newTabSpec("VMInfoPage")
         		.setIndicator("프로세스 정보")
-        		.setContent(new Intent(this, MemAllocActivity.class)));
+        		.setContent(new Intent(this, ProcInfoActivity.class)));
         
         tabHost.addTab(tabHost.newTabSpec("PMInfoPage")
         		.setIndicator("물리메모리 정보")
-        		.setContent(new Intent(this, MemAllocActivity.class)));
+        		.setContent(new Intent(this, physicalMemInfoActivity.class)));
     }
 }

@@ -3,6 +3,8 @@
     android:layout_height="match_parent" android:orientation="vertical" android:layout_margin="5dip">
 
     <TextView android:id="@+id/procResult" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:scrollbars="horizontal|vertical"/>
+        android:layout_height="wrap_content" android:scrollbars="horizontal|vertical"
+        
+        android:text="dumpsys 어찌 구현할지 생각중.."/>
 
 </LinearLayout>

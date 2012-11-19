@@ -43,7 +43,6 @@ public class MemAllocActivity extends Activity implements OnClickListener
 	private int mNativeAllocArrsize;
 	private boolean isActivityRunning;
 	
-	
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -67,6 +66,7 @@ public class MemAllocActivity extends Activity implements OnClickListener
 		
 		isVMAllocThreadRunning = false;
 		isNativeAllocThreadRunning = false;
+		
 		Intent intent = new Intent(this, MemAllocService.class);
 		startService(intent);
 		

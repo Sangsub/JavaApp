@@ -21,6 +21,9 @@ public class MemAllocService extends Service
 	private Thread mNativeAllocThread;
 	private boolean isVMAllocThreadRunning;
 	
+	
+	public int arr[][];
+	
     public static final String ACTION_VMALLOC_START = "com.MemAlloc.VMAllocStartThread";
     public static final String ACTION_VMALLOC_STOP = "com.MemAlloc.VMAllocStopThread";
     public static final String ACTION_NATIVEALLOC_START = "com.MemAlloc.NativeAllocStartThread";
@@ -32,6 +35,7 @@ public class MemAllocService extends Service
     
     public native void NativeMemAllocStopFromJNI();
     public native boolean NativeMemAllocStartFromJNI(int arrCount, int arrSize);
+    public native void PrintAddressFromJNI(int i, int[] arr2);
     
     static
     {
@@ -53,6 +57,7 @@ public class MemAllocService extends Service
 		filter.addAction(ACTION_NATIVEALLOC_START);		
 		filter.addAction(ACTION_NATIVEALLOC_STOP);		
 		registerReceiver(mMemVMAllocService_KeyListener, filter);
+		
 	}
 	
 	@Override
@@ -73,7 +78,7 @@ public class MemAllocService extends Service
 	public int onStartCommand(Intent intent, int flags, int startId)
 	{
 		Log.e(LOG_TAG, "[onStartCommand]");		
-		Toast.makeText(this, "서비스를 시작", Toast.LENGTH_LONG).show();
+//		Toast.makeText(this, "서비스를 시작", Toast.LENGTH_LONG).show();
 
 		if (intent == null) {
             // Nothing to process, stop.
@@ -86,8 +91,8 @@ public class MemAllocService extends Service
 
 	void createVMAllocThread()
 	{
-		Log.e(LOG_TAG, "[createVMAllocThread]");	
-    	final Double arr[][] = new Double[mVMarrCount][];
+		Log.e(LOG_TAG, "[createVMAllocThread] sizoef double : " + Integer.SIZE );
+    	arr = new int[mVMarrCount][];
     	
     	mVMAllocThread = new Thread(new Runnable() {
 			@Override
@@ -97,9 +102,15 @@ public class MemAllocService extends Service
 				{
 					for(int i=0; i<mVMarrCount; i++)
 					{
-						arr[i] = new Double[mVMarrSize];
-//						Log.e(LOG_TAG, "[createVMAllocThread] Alloc VMHEAP");
-//						SystemClock.sleep(10);
+						arr[i] = new int[mVMarrSize];
+
+						for(int j=0; j<mVMarrSize; j++)
+						{
+							arr[i][j] = (int) 1;
+						}
+						
+//						PrintAddressFromJNI(i, arr[i]);
+						SystemClock.sleep(1);						
 					}
 				}
 				
@@ -142,7 +153,7 @@ public class MemAllocService extends Service
 			stopVMAllocThread();
 		
 		Log.e(LOG_TAG, "[onDestroy] prev isVMAllocThreadRunning : " + isVMAllocThreadRunning);
-		Toast.makeText(this, "서비스를 중지", Toast.LENGTH_LONG).show();
+//		Toast.makeText(this, "서비스를 중지", Toast.LENGTH_LONG).show();
 		unregisterReceiver(mMemVMAllocService_KeyListener);
 	}
 	
@@ -152,7 +163,7 @@ public class MemAllocService extends Service
         public void onReceive(Context context, Intent intent)
         {
             String action = intent.getAction();
-            Toast.makeText(context, action, Toast.LENGTH_LONG).show();
+//            Toast.makeText(context, action, Toast.LENGTH_LONG).show();
             Log.e(LOG_TAG, "[onReceive] " + action);            
             
             if(action.equals(ACTION_VMALLOC_START))
